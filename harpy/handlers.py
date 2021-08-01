@@ -309,7 +309,7 @@ class ParserHandler(object):
             version=ArgumentHandler.handle_log(), help="show log and exit",
         )
         parser.add_argument(
-            "-n", default=data.DEF_NOD, type=int, metavar="node", dest="n",
+            "-n", default=data.DEF_NOD, type=int, metavar="NODE", dest="n",
             help="use NODE as last ip octet to send packets "
                  "[default:%%(default)s|min:%d|max:%d]" % (data.MIN_NOD,
                                                            data.MAX_NOD),
