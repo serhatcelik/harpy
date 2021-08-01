@@ -4,22 +4,26 @@
 # Released under the MIT license
 # Copyright (C) Serhat Çelik
 
-"""hARPy -who uses ARP-: Active/passive ARP discovery tool."""
+"""
+hARPy -who uses ARP- - Active/passive ARP discovery tool.
+"""
 
 from __future__ import print_function
+
+import atexit
+import logging.config
 import os
+import subprocess
 import sys
 import time
-import atexit
 import traceback
-import subprocess
-import logging.config
+
 from harpy import data
 from harpy.data import run_main
-from harpy.threads import SendThread, SniffThread
 from harpy.handlers import (ExceptionHandler, EchoHandler, InterfaceHandler,
                             ParserHandler, ResultHandler, SignalHandler,
                             SocketHandler, WindowHandler)
+from harpy.threads import SendThread, SniffThread
 
 
 def setup_py_main():
@@ -29,11 +33,12 @@ def setup_py_main():
                 main()
                 terminate()
             else:
-                sys.exit("Run me as superuser (a.k.a. root)")
+                print("[!] Run me as superuser (a.k.a. root)")
+                sys.exit(2)
         else:
-            sys.exit(1)
+            sys.exit(2)
     else:
-        sys.exit(1)
+        sys.exit(2)
 
 
 def main():
@@ -52,7 +57,7 @@ def main():
     vars(main)[data.PARSER].create_links(commands)
 
     if not vars(main)[data.PARSER].check_arguments():
-        sys.exit(1)
+        sys.exit(2)
 
     setattr(main, data.SOCKET, SocketHandler(data.SOC_PRO))
     vars(main)[data.SOCKET].set_options()
@@ -63,6 +68,7 @@ def main():
 
     setattr(main, data.SNIFF, SniffThread(vars(main)[data.SOCKET].l2soc))
     vars(main)[data.SNIFF].name = data.SNIFF
+
     # Create a container to store all threads and then store one
     setattr(main, "threads", [vars(main)[data.SNIFF].name])
     vars(main)[data.SNIFF].start()  # Start sniffing the packets
@@ -104,10 +110,13 @@ def main():
 
 @ExceptionHandler()
 def terminate():
-    """Terminates all threads and closes the socket."""
+    """
+    Terminate all threads and close the socket.
+    """
 
     data.CATCH_SIGNALS = list()  # No more catch
     data.IGNORE_SIGNALS = data.CATCHABLE_SIGNALS  # Update to ignore all
+
     # Disable the signal handler (__call__) to prevent activating it again
     getattr(main, data.SIGNAL, SignalHandler()).ignore(*data.IGNORE_SIGNALS)
 
@@ -123,12 +132,15 @@ def terminate():
     for _ in data.EXIT_MSGS:
         print(_)
     sys.stdout.flush()
-    sys.exit(1)
+
+    # Exit status (0: All is well, 2: Error, 34: Fatal)
+    status = 0 if all("signal" in _ for _ in data.EXIT_MSGS) else 2
+    sys.exit(status)
 
 
 def terminate_hard(*args):
     """
-    Logs the exception and terminates all threads the hard way.
+    Log the exception and terminate all threads the hard way.
 
     :param args: Container that stores type, value and traceback.
     """
@@ -142,7 +154,7 @@ def terminate_hard(*args):
     getattr(main, data.ECHO, EchoHandler()).enable()
     if hasattr(main, data.SOCKET):
         vars(main)[data.SOCKET].close()
-    vars(os)["_exit"](34)  # Force exiting with code 34
+    vars(os)["_exit"](34)  # Force exiting with code 34 (fatal)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,9 @@
 # Released under the MIT license
 # Copyright (C) Serhat Çelik
 
-"""hARPy -who uses ARP-: Active/passive ARP discovery tool."""
+"""
+hARPy -who uses ARP- - Active/passive ARP discovery tool.
+"""
 
 import sys
 import threading
@@ -13,7 +15,7 @@ import threading
 def install_thread_excepthook():
     """
     Workaround for sys.excepthook thread bug from:
-    https://bugs.python.org/issue1230540
+      https://bugs.python.org/issue1230540
     """
 
     init_original = threading.Thread.__init__

@@ -4,10 +4,11 @@
 # Released under the MIT license
 # Copyright (C) Serhat Çelik
 
+import binascii
 import socket
 import struct
-import binascii
 import threading
+
 from harpy import data
 from harpy.data import check_ip, get_first_last
 from harpy.handlers import ExceptionHandler, PacketHandler

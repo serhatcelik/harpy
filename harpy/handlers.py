@@ -5,18 +5,20 @@
 # Copyright (C) Serhat Çelik
 
 from __future__ import print_function
+
+import argparse
+import binascii
+import json
 import os
 import re
-import sys
-import json
 import signal
 import socket
 import struct
-import termios
-import argparse
-import binascii
-import threading
 import subprocess
+import sys
+import termios
+import threading
+
 from harpy import __license__, data
 from harpy.data import get_logo, get_banner, add_colons, add_dots, run_main
 
@@ -49,13 +51,14 @@ class ExceptionHandler(object):
 
     def add_exception(self, errnum, error):
         """
-        Updates the exit messages container with a new error message.
+        Update the exit messages container with a new error message.
 
         :param errnum: Error number.
         :param error: Error content.
         """
 
-        data.EXIT_MSGS.add("%s -> [Errno %d] %s" % (self.who, errnum, error))
+        data.EXIT_MSGS.add("[!] %s -> [Errno %d] %s" % (self.who,
+                                                        errnum, error))
 
 
 class ArgumentHandler(object):
@@ -71,19 +74,19 @@ class ArgumentHandler(object):
     @ExceptionHandler()
     def handle_interface(interface):
         if interface is False:
-            print("No available interface in %s" % data.SYS_PATH)
+            print("[!] No available interface in %s" % data.SYS_PATH)
             sys.stdout.flush()
             return False
         if interface == "lo":
-            print("'%s': This is not an Ethernet interface" % interface)
+            print("[!] '%s': This is not an Ethernet interface" % interface)
             sys.stdout.flush()
             return False
         if interface not in InterfaceHandler().members:
-            print("'%s': No such interface" % interface)
+            print("[!] '%s': No such interface" % interface)
             sys.stdout.flush()
             return False
         if InterfaceHandler().members[interface] != "up":
-            print("'%s': Interface is not available (dormant?)" % interface)
+            print("[!] '%s': Interface not available (dormant?)" % interface)
             sys.stdout.flush()
             return False
         return True
@@ -130,7 +133,7 @@ class ArgumentHandler(object):
 
             problem = [_ for _ in range_ if not bool(re.search(pattern, _))]
             if problem:
-                print("Problem with scanning range(s)", end=" -> ")
+                print("Problem with scanning range(s):", end=" ")
                 for i, _ in enumerate(problem):
                     # Last error?
                     if i == len(problem) - 1:
@@ -169,7 +172,9 @@ class EchoHandler(object):
 
     @ExceptionHandler()
     def enable(self):
-        """Enables terminal echo."""
+        """
+        Enable terminal echo.
+        """
 
         new = termios.tcgetattr(self.descriptor)
         new[3] |= termios.ECHO
@@ -177,7 +182,9 @@ class EchoHandler(object):
 
     @ExceptionHandler()
     def disable(self):
-        """Disables terminal echo."""
+        """
+        Disable terminal echo.
+        """
 
         new = termios.tcgetattr(self.descriptor)
         new[3] &= ~termios.ECHO
@@ -218,7 +225,7 @@ class InterfaceHandler(object):
     @staticmethod
     def get_mac(l2soc):
         """
-        Returns the MAC address of an interface.
+        Return the MAC address of an interface.
 
         :param l2soc: Layer 2 RAW socket.
         """
@@ -262,7 +269,7 @@ class ParserHandler(object):
     @staticmethod
     def create_arguments():
         parser = argparse.ArgumentParser(
-            prog="harpy",
+            prog="harpy", usage="%(prog)s [optional_arguments]",
             description="hARPy - Active/passive ARP discovery tool\n"
                         "Written by Serhat Çelik "
                         "(with the help of my family and a friend)",
@@ -273,10 +280,13 @@ class ParserHandler(object):
             formatter_class=argparse.RawTextHelpFormatter,
         )
 
+        ######################
+        # Optional Arguments #
+        ######################
         parser.add_argument(
-            "-c", default=data.DEF_CNT, type=int, metavar="count", dest="c",
-            help="number of times to send each request "
-                 "(def:%%(default)s|min:%d)" % data.MIN_CNT,
+            "-c", default=data.DEF_CNT, type=int, metavar="COUNT", dest="c",
+            help="send each request COUNT times "
+                 "[default:%%(default)s|min:%d]" % data.MIN_CNT,
         )
         parser.add_argument(
             "-f", "--fast", action="store_true", dest="f",
@@ -287,8 +297,8 @@ class ParserHandler(object):
             help="filter the sniff results using the given scanning range",
         )
         parser.add_argument(
-            "-i", default=InterfaceHandler()(), metavar="interface", dest="i",
-            help="network device to send/sniff packets",
+            "-i", default=InterfaceHandler()(), metavar="INTERFACE", dest="i",
+            help="use INTERFACE as network device to send/sniff packets",
         )
         parser.add_argument(
             "-L", "--license", version=__license__.__doc__,
@@ -300,31 +310,32 @@ class ParserHandler(object):
         )
         parser.add_argument(
             "-n", default=data.DEF_NOD, type=int, metavar="node", dest="n",
-            help="last ip octet to be used to send packets "
-                 "(def:%%(default)s|min:%d|max:%d)" % (data.MIN_NOD,
-                                                       data.MAX_NOD),
+            help="use NODE as last ip octet to send packets "
+                 "[default:%%(default)s|min:%d|max:%d]" % (data.MIN_NOD,
+                                                           data.MAX_NOD),
         )
         parser.add_argument(
             "-p", "--passive", action="store_true", dest="p",
             help="enable passive mode, do not send any packets",
         )
         parser.add_argument(
-            "-r", nargs="+", metavar="range", dest="r", help="scanning range",
-        )
-        parser.add_argument(
             "-R", "--repeat", action="store_true", dest="R",
             help="enable repeat mode, never stop sending packets"
         )
         parser.add_argument(
-            "-s", default=data.DEF_SLP, type=int, metavar="time", dest="s",
-            help="time to sleep between each request in ms "
-                 "(def:%%(default)s|min:%d|max:%d)" % (data.MIN_SLP,
-                                                       data.MAX_SLP),
+            "-r", nargs="+", metavar="RANGE", dest="r",
+            help="use RANGE as scanning range",
         )
         parser.add_argument(
-            "-t", default=data.DEF_TIM, type=int, metavar="timeout", dest="t",
-            help="timeout to stop scanning in sec "
-                 "(def:%%(default)s|min:%d)" % data.MIN_TIM,
+            "-s", default=data.DEF_SLP, type=int, metavar="TIME", dest="s",
+            help="sleep TIME milliseconds between each request "
+                 "[default:%%(default)s|min:%d|max:%d]" % (data.MIN_SLP,
+                                                           data.MAX_SLP),
+        )
+        parser.add_argument(
+            "-t", default=data.DEF_TIM, type=int, metavar="TIMEOUT", dest="t",
+            help="stop scanning after TIMEOUT seconds "
+                 "[default:%%(default)s|min:%d]" % data.MIN_TIM,
         )
         parser.add_argument(
             "-v", "--version", version="v" + __license__.VERSION,
@@ -336,7 +347,7 @@ class ParserHandler(object):
     @staticmethod
     def create_links(commands):
         """
-        Creates shortcuts to the commands.
+        Create shortcuts to the commands.
 
         :param commands: Parsed command-line arguments.
         """
@@ -397,7 +408,9 @@ class ResultHandler(object):
 
     @staticmethod
     def open_ouis():
-        """Obtains the contents of the file that contains OUIs."""
+        """
+        Obtain the contents of the file that contains OUIs.
+        """
 
         ouis_file = os.path.join(os.path.dirname(__file__), "ouis.json")
         if os.path.isfile(ouis_file):
@@ -410,7 +423,7 @@ class ResultHandler(object):
 
     def get_vendor(self, mac):
         """
-        Finds a vendor using the given MAC address.
+        Find a vendor using the given MAC address.
 
         :param mac: MAC address to find the vendor.
         """
@@ -446,7 +459,7 @@ class SignalHandler(object):
                 return
             except TypeError:
                 # Workaround for _thread.interrupt_main bug from:
-                # https://bugs.python.org/issue23395
+                #   https://bugs.python.org/issue23395
                 pass
 
 
@@ -464,7 +477,7 @@ class SocketHandler(object):
     @ExceptionHandler(data.SOCKET)
     def bind(self, interface, port):
         """
-        Binds the socket to an interface.
+        Bind the socket to an interface.
 
         :param interface: Network device to send/sniff packets.
         :param port: Port to bind to an interface.
@@ -546,7 +559,7 @@ class WindowHandler(object):
     @ExceptionHandler()
     def draw_a_row(*args):
         """
-        Draws a row for the result window.
+        Draw a row for the result window.
 
         :param args: Container that stores column texts.
         """

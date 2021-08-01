@@ -4,6 +4,9 @@
 # Released under the MIT license
 # Copyright (C) Serhat Çelik
 
+"""
+Global variables and functions for handling external modules.
+"""
 
 ################
 # Over Control #
@@ -135,9 +138,9 @@ TGT_MAC = "ff" * 6  # Target MAC address: Broadcast
 TGT_IP = None  # Target IP address
 
 
-#############
-# Functions #
-#############
+#########
+# Tools #
+#########
 def get_logo():
     return [
         r"|_  _  _ _   ",
@@ -156,7 +159,7 @@ def get_banner():
 
 def add_colons(mac):
     """
-    Adds colons to the given MAC address.
+    Add colons to the given MAC address.
 
     :param mac: MAC address to be added with colons.
     """
@@ -166,7 +169,7 @@ def add_colons(mac):
 
 def add_dots(text, width, xref=0):
     """
-    Creates a new dotted text if the text length exceeds the width.
+    Create a new dotted text if the text length exceeds the width.
 
     :param text: Text to be shortened.
     :param width: Terminal width.
@@ -182,7 +185,7 @@ def add_dots(text, width, xref=0):
 
 def check_ip(ip_addr, range_):
     """
-    Checks an IP address using the given scanning range.
+    Check an IP address using the given scanning range.
 
     :param ip_addr: IP address to check.
     :param range_: Scanning range.
@@ -195,7 +198,7 @@ def check_ip(ip_addr, range_):
 
 def get_first_last(range_):
     """
-    Determines the first/last IP address using the given scanning range.
+    Determine the first/last IP address using the given scanning range.
 
     :param range_: Scanning range.
     """
@@ -223,8 +226,8 @@ def run_main(run, timed_out=False):
 
     if (not run) or timed_out or (len(RESULT_ALL) > CONT_MAX_SIZ):
         if timed_out:
-            EXIT_MSGS.add("Exiting, timed out")
+            EXIT_MSGS.add("[*] Exiting, timed out")
         elif len(RESULT_ALL) > CONT_MAX_SIZ:
-            EXIT_MSGS.add("Exiting, no space left in the results container")
+            EXIT_MSGS.add("[!] Exiting, no space left in results container")
 
         globals()["RUN_MAIN"] = False
