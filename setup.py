@@ -1,8 +1,13 @@
 # coding=utf-8
 
+"""
+Setup script for hARPy.
+"""
+
+import io
 import setuptools
 
-with open("README.md", "r", encoding="utf-8") as readme:
+with io.open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
 setuptools.setup(
@@ -57,5 +62,6 @@ setuptools.setup(
     project_urls={
         "Source Code": "https://github.com/serhatcelik/harpy",
         "Bug Tracker": "https://github.com/serhatcelik/harpy/issues",
+        "Documentation": "https://github.com/serhatcelik/harpy/wiki",
     },
 )

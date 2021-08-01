@@ -2,6 +2,15 @@
 # History of the hARPy #
 ########################
 
+hARPy v2021.8.1
+---------------
+- Fixed the error "TypeError: 'encoding' is an invalid keyword argument for this function" when trying to install hARPy with Python version 2.7.
+- Code improvements.
+- Exit statuses have been changed; 0: All is well, 2: Error, 34: Fatal.
+- The UI has been improved.
+- Documentation has been improved.
+
+
 hARPy v2021.4.17
 ----------------
 - The UI has been improved.
