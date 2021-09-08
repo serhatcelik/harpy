@@ -2,6 +2,14 @@
 # History of the hARPy #
 ########################
 
+hARPy v2021.9.8
+---------------
+- It is now checked whether the current operating system is supported or not.
+- Code improvements.
+- The UI has been improved.
+- Documentation has been improved.
+
+
 hARPy v2021.8.1.post1
 ---------------------
 - Documentation has been improved.

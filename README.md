@@ -1,6 +1,10 @@
 # hARPy
 
-hARPy is an active/passive ARP discovery tool. It supports [Python 2][1] (2.7) and [Python 3][1] (3.4 to 3.9) and runs only on GNU/Linux.
+[![](https://img.shields.io/pypi/v/harpy-prjct?label=PyPI)][6]
+[![](https://img.shields.io/pypi/pyversions/harpy-prjct?label=Python)][6]
+[![](https://img.shields.io/pypi/l/harpy-prjct?label=License)][4]
+
+**hARPy is an active/passive ARP discovery tool. It supports [Python 2][1] (2.7) and [Python 3][1] (3.4 to 3.9) and runs only on GNU/Linux.**
 
 ## How It Works
 
@@ -33,24 +37,24 @@ Sends [ARP (Address Resolution Protocol)][2] requests (active mode only) for dis
 ### PyPI
 
 ```shell
-# python3 -m pip install -U pip
-# python3 -m pip install -U setuptools
-# python3 -m pip install -U harpy-prjct
+python3 -m pip install -U pip
+python3 -m pip install -U setuptools
+python3 -m pip install -U harpy-prjct
 ```
 
 Note: For Python version 2, change the command "python3" to "python2". But first get the PIP script by doing the following:
 
 ```shell
-# curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-# python2 get-pip.py
+curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+python2 get-pip.py
 ```
 
 ### GitHub
 
 ```shell
-# git clone https://github.com/serhatcelik/harpy.git
-# cd harpy
-# python3 -m harpy --help
+git clone https://github.com/serhatcelik/harpy.git
+cd harpy
+python3 -m harpy --help
 ```
 
 ## Usage
@@ -58,28 +62,24 @@ Note: For Python version 2, change the command "python3" to "python2". But first
 Use the following command to get [usage][3] help:
 
 ```shell
-# harpy --help
+harpy --help
 ```
 
 ## Examples
 
-```shell
-# Active scanning for common IP addresses in fast mode
-harpy -f
+```
+# Active scanning for common IP addresses in fast mode on wlan0
+harpy -i wlan0 -f
 
-# Passive scanning on eth0
-harpy -i eth0 -p
+# Passive scanning
+harpy -i wlan0 -p
 
 # Scan a fixed range with a count value of 2
-harpy -r 192.168.0.1/24 -c 2
+harpy -i wlan0 -r 192.168.0.1/24 -c 2
 
 # Scan some fixed ranges with filtering
-harpy -r 172.16.0.1/16 10.0.0.1/8 -F
+harpy -i wlan0 -r 172.16.0.1/16 10.0.0.1/8 -F
 ```
-
-## License
-
-[MIT License][4]
 
 ## Feedback
 
@@ -91,3 +91,4 @@ If you have found a bug or have a suggestion, please consider [creating an issue
 [3]: https://github.com/serhatcelik/harpy/wiki#usage
 [4]: https://choosealicense.com/licenses/mit/
 [5]: https://github.com/serhatcelik/harpy/issues
+[6]: https://pypi.org/project/harpy-prjct/

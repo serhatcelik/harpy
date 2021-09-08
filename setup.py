@@ -1,5 +1,9 @@
 # coding=utf-8
 
+# This file is part of hARPy
+# Released under the MIT license
+# Copyright (C) Serhat Çelik
+
 """
 Setup script for hARPy.
 """
@@ -12,15 +16,16 @@ with io.open("README.md", "r", encoding="utf-8") as readme:
 
 setuptools.setup(
     name="harpy-prjct",
-    version=__import__("harpy.__license__", fromlist="__license__").VERSION,
+    version=__import__("harpy.notice", fromlist="notice").VERSION,
     description="Active/passive ARP discovery tool",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="Serhat Çelik",
+    author=__import__("harpy.notice", fromlist="notice").AUTHOR,
     url="https://github.com/serhatcelik/harpy",
     download_url="https://github.com/serhatcelik/harpy/releases/latest",
     packages=setuptools.find_packages(),
     classifiers=[
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Information Technology",
         "Intended Audience :: Science/Research",
@@ -45,7 +50,7 @@ setuptools.setup(
             "executable": "/bin/custom_python",
         },
     },
-    license="MIT",
+    license=__import__("harpy.notice", fromlist="notice").LICENSE,
     license_files=["LICENSE"],
     keywords=["harpy", "arp", "discovery"],
     platforms=["Linux"],
@@ -63,5 +68,6 @@ setuptools.setup(
         "Source Code": "https://github.com/serhatcelik/harpy",
         "Bug Tracker": "https://github.com/serhatcelik/harpy/issues",
         "Documentation": "https://github.com/serhatcelik/harpy/wiki",
+        "Say Thanks!": "https://saythanks.io/to/serhatcelik",
     },
 )
