@@ -4,10 +4,30 @@
 # Released under the MIT license
 # Copyright (C) Serhat Çelik
 
+r"""
+EXAMPLES
+  1) Active scanning for common IP addresses in fast mode on wlan0
+  harpy -i wlan0 -f
+
+  2) Passive scanning
+  harpy -i wlan0 -p
+
+  3) Scan a fixed range with a count value of 2
+  harpy -i wlan0 -r 192.168.0.1/24 -c 2
+
+  4) Scan some fixed ranges with filtering
+  harpy -i wlan0 -r 172.16.0.1/16 10.0.0.1/8 -F
+
+ABOUT
+  It is recommended to enable passive mode on networks with heavy packet flow.
+  See https://github.com/serhatcelik/harpy for more information.
+"""
+
 from __future__ import print_function
 
 import argparse
 import binascii
+import io
 import json
 import os
 import re
@@ -19,7 +39,7 @@ import sys
 import termios
 import threading
 
-from harpy import __license__, data
+from harpy import notice, data
 from harpy.data import get_logo, get_banner, add_colons, add_dots, run_main
 
 
@@ -49,16 +69,15 @@ class ExceptionHandler(object):
 
         return wrapper
 
-    def add_exception(self, errnum, error):
+    def add_exception(self, erno, error):
         """
         Update the exit messages container with a new error message.
 
-        :param errnum: Error number.
+        :param erno: Error number.
         :param error: Error content.
         """
 
-        data.EXIT_MSGS.add("[!] %s -> [Errno %d] %s" % (self.who,
-                                                        errnum, error))
+        data.EXIT_MSGS.add("[!] %s -> [Errno %d] %s" % (self.who, erno, error))
 
 
 class ArgumentHandler(object):
@@ -94,7 +113,7 @@ class ArgumentHandler(object):
     @staticmethod
     def handle_log():
         if os.path.isfile(data.LOG_FILE):
-            with open(data.LOG_FILE, "r") as log:
+            with io.open(data.LOG_FILE, "r", encoding="utf-8") as log:
                 return log.read()
         return "No log"
 
@@ -124,14 +143,14 @@ class ArgumentHandler(object):
             octet = "([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
             pattern = r"^({0}\.{0}\.{0}\.{0}/(8|16|24))$".format(octet)
 
-            set_range_ = list()
+            set_range_ = []
             # Remove repetitive scanning ranges
             for _ in range_:
                 if _ not in set_range_:
                     set_range_.append(_)
             range_ = set_range_
 
-            problem = [_ for _ in range_ if not bool(re.search(pattern, _))]
+            problem = [_ for _ in range_ if not bool(re.match(pattern, _))]
             if problem:
                 print("Problem with scanning range(s):", end=" ")
                 for i, _ in enumerate(problem):
@@ -144,11 +163,11 @@ class ArgumentHandler(object):
                 return False
 
         data.RNG = [[
-            _.split(".")[0],
+            _.split(".")[0],  # pylint: disable=C0207
             _.split(".")[1],
             _.split(".")[2],
-            _.split(".")[-1].split("/")[0],
-            _.split(".")[-1].split("/")[-1],
+            _.split(".")[3].split("/")[0],
+            _.split(".")[3].split("/")[-1],
         ] for _ in range_]  # Convert the scanning range to list format
 
         return True
@@ -192,7 +211,7 @@ class EchoHandler(object):
 
 
 class InterfaceHandler(object):
-    members = dict()  # All interfaces
+    members = {}  # All interfaces
 
     def __init__(self):
         if hasattr(socket, "if_nameindex"):
@@ -206,9 +225,9 @@ class InterfaceHandler(object):
             if _ != "lo":
                 operstate_file = os.path.join(data.SYS_PATH, _, "operstate")
                 if os.path.isfile(operstate_file):
-                    with open(operstate_file, "r") as operstate:
+                    with io.open(operstate_file, "r", encoding="utf-8") as opf:
                         try:
-                            self.members[_] = operstate.read().strip().lower()
+                            self.members[_] = opf.read().strip().lower()
                         except (IOError, OSError) as err:
                             # 22: Invalid argument
                             if err.args[0] == 22:
@@ -269,77 +288,79 @@ class ParserHandler(object):
     @staticmethod
     def create_arguments():
         parser = argparse.ArgumentParser(
-            prog="harpy", usage="%(prog)s [optional_arguments]",
+            prog="harpy", usage="%(prog)s [<extra_option> ...]",
             description="hARPy - Active/passive ARP discovery tool\n"
-                        "Written by Serhat Çelik "
-                        "(with the help of my family and a friend)",
-            epilog="It is recommended that you enable passive mode on "
-                   "networks with heavy packet flow.\n"
-                   "See https://github.com/serhatcelik/harpy "
-                   "for more information.",
-            formatter_class=argparse.RawTextHelpFormatter,
+                        "Written by %s "
+                        "(with the help of my family and a friend)"
+                        "" % notice.AUTHOR,
+            epilog=__doc__, formatter_class=argparse.RawTextHelpFormatter,
         )
 
         ######################
         # Optional Arguments #
         ######################
         parser.add_argument(
-            "-c", default=data.DEF_CNT, type=int, metavar="COUNT", dest="c",
-            help="send each request COUNT times "
-                 "[default:%%(default)s|min:%d]" % data.MIN_CNT,
+            "-c", metavar="<count>", dest="c", action="store",
+            default=data.DEF_CNT, type=int,
+            help="send each request %%(metavar)s times, see example 3 "
+                 "[DEFAULT:%%(default)s|MINIMUM:%d]" % data.MIN_CNT,
         )
         parser.add_argument(
-            "-f", "--fast", action="store_true", dest="f",
-            help="enable fast mode, only scan for specific hosts",
+            "-f", "--fast", dest="f", action="store_true", default=False,
+            help="enable fast mode, only scan specific hosts, see example 1",
         )
         parser.add_argument(
-            "-F", "--filter", action="store_true", dest="F",
-            help="filter the sniff results using the given scanning range",
+            "-F", "--filter", dest="F", action="store_true", default=False,
+            help="filter results using given scanning range, see example 4",
         )
         parser.add_argument(
-            "-i", default=InterfaceHandler()(), metavar="INTERFACE", dest="i",
-            help="use INTERFACE as network device to send/sniff packets",
+            "-i", metavar="<interface>", dest="i", action="store",
+            default=InterfaceHandler()(),
+            help="use %(metavar)s as net device to send/sniff, see example 1",
         )
         parser.add_argument(
-            "-L", "--license", version=__license__.__doc__,
-            action="version", help="show license and exit",
+            "-L", "--license", dest="license", action="version", default=None,
+            version=notice.__doc__, help="show license and exit",
         )
         parser.add_argument(
-            "-l", "--log", action="version",
+            "-l", "--log", dest="log", action="version", default=None,
             version=ArgumentHandler.handle_log(), help="show log and exit",
         )
         parser.add_argument(
-            "-n", default=data.DEF_NOD, type=int, metavar="NODE", dest="n",
-            help="use NODE as last ip octet to send packets "
-                 "[default:%%(default)s|min:%d|max:%d]" % (data.MIN_NOD,
+            "-n", metavar="<node>", dest="n", action="store",
+            default=data.DEF_NOD, type=int,
+            help="use %%(metavar)s as last ip octet to send packets "
+                 "[DEFAULT:%%(default)s|MIN:%d|MAX:%d]" % (data.MIN_NOD,
                                                            data.MAX_NOD),
         )
         parser.add_argument(
-            "-p", "--passive", action="store_true", dest="p",
-            help="enable passive mode, do not send any packets",
+            "-p", "--passive", dest="p", action="store_true", default=False,
+            help="enable passive mode, do not send any packets, see example 2",
         )
         parser.add_argument(
-            "-R", "--repeat", action="store_true", dest="R",
+            "-R", "--repeat", dest="R", action="store_true", default=False,
             help="enable repeat mode, never stop sending packets"
         )
         parser.add_argument(
-            "-r", nargs="+", metavar="RANGE", dest="r",
-            help="use RANGE as scanning range",
+            "-r", metavar="<rng>", dest="r", action="store", nargs="+",
+            default=None, help="use %(metavar)s as scanning range",
         )
         parser.add_argument(
-            "-s", default=data.DEF_SLP, type=int, metavar="TIME", dest="s",
-            help="sleep TIME milliseconds between each request "
-                 "[default:%%(default)s|min:%d|max:%d]" % (data.MIN_SLP,
+            "-s", metavar="<time>", dest="s", action="store",
+            default=data.DEF_SLP, type=int,
+            help="sleep %%(metavar)s milliseconds between each request "
+                 "[DEFAULT:%%(default)s|MIN:%d|MAX:%d]" % (data.MIN_SLP,
                                                            data.MAX_SLP),
         )
         parser.add_argument(
-            "-t", default=data.DEF_TIM, type=int, metavar="TIMEOUT", dest="t",
-            help="stop scanning after TIMEOUT seconds "
-                 "[default:%%(default)s|min:%d]" % data.MIN_TIM,
+            "-t", metavar="<timeout>", dest="t", action="store",
+            default=data.DEF_TIM, type=int,
+            help="stop scanning after %%(metavar)s seconds "
+                 "[DEFAULT:%%(default)s|MIN:%d]" % data.MIN_TIM,
         )
         parser.add_argument(
-            "-v", "--version", version="v" + __license__.VERSION,
-            action="version", help="show program version and exit",
+            "-v", "--version", dest="version", action="version", default=None,
+            version="v" + notice.VERSION, help="show program version and exit",
         )
 
         return parser.parse_args()
@@ -414,7 +435,7 @@ class ResultHandler(object):
 
         ouis_file = os.path.join(os.path.dirname(__file__), "ouis.json")
         if os.path.isfile(ouis_file):
-            with open(ouis_file, "r") as ouis:
+            with io.open(ouis_file, "r", encoding="utf-8") as ouis:
                 try:
                     return json.load(ouis)
                 except ValueError:
@@ -442,7 +463,7 @@ class SignalHandler(object):
         self.main_thread = vars(threading)["_MainThread"]
 
     def __call__(self, _signum, _frame):
-        data.EXIT_MSGS.add("Exiting, received signal %d" % _signum)
+        data.EXIT_MSGS.add("[x] Exiting, received signal %d" % _signum)
         run_main(False)
 
     def catch(self, *signals):

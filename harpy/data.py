@@ -21,8 +21,8 @@ WAIT_SEND = float(2) / 10
 WAIT_SNIFF = float(1) / 10
 
 # Results
-RESULT_A = list()  # Container for storing a sniff result
-RESULT_ALL = list()  # Container for storing all sniff results
+RESULT_A = []  # Container for storing a sniff result
+RESULT_ALL = []  # Container for storing all sniff results
 
 #############
 # Locations #

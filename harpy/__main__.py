@@ -20,9 +20,9 @@ import traceback
 
 from harpy import data
 from harpy.data import run_main
-from harpy.handlers import (ExceptionHandler, EchoHandler, InterfaceHandler,
-                            ParserHandler, ResultHandler, SignalHandler,
-                            SocketHandler, WindowHandler)
+from harpy.handlers import ExceptionHandler, EchoHandler, InterfaceHandler
+from harpy.handlers import ParserHandler, ResultHandler, SignalHandler
+from harpy.handlers import SocketHandler, WindowHandler
 from harpy.threads import SendThread, SniffThread
 
 
@@ -114,14 +114,14 @@ def terminate():
     Terminate all threads and close the socket.
     """
 
-    data.CATCH_SIGNALS = list()  # No more catch
+    data.CATCH_SIGNALS = []  # No more catch
     data.IGNORE_SIGNALS = data.CATCHABLE_SIGNALS  # Update to ignore all
 
     # Disable the signal handler (__call__) to prevent activating it again
     getattr(main, data.SIGNAL, SignalHandler()).ignore(*data.IGNORE_SIGNALS)
 
     # Join first to prevent the "Set changed size during iteration" error
-    for _ in getattr(main, "threads", list()):
+    for _ in getattr(main, "threads", []):
         vars(main)[_].flag.set()  # Tell the thread to terminate itself
         vars(main)[_].join()
 
