@@ -1,0 +1,34 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'project.harpy'
+authors = [{name = 'Serhat Çelik'}]
+description = 'Active/passive ARP discovery tool'
+requires-python = '~=3.9'
+keywords = ['harpy', 'arp', 'discovery']
+license = {text = 'MIT'}
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Environment :: Console',
+    'Intended Audience :: Information Technology',
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3 :: Only',
+    'Topic :: System :: Networking',
+    'Topic :: System :: Networking :: Monitoring',
+]
+dynamic = ['version']
+
+[project.scripts]
+harpy = 'harpy.__main__:main'
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.package-data]
+harpy = ['*.json']
+
+[tool.setuptools.dynamic]
+version = {attr = 'harpy.__version__.__version__'}
